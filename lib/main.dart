@@ -9,17 +9,10 @@ void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {;
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Welcome to Flutter',
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('W to Flutter'),
-        ),
-        body: Center(
-          child: RandomWords()
-        ),
-      ),
+      home: RandomWords(),
     );
   }
 }
@@ -31,12 +24,54 @@ class RandomWords extends StatefulWidget {
 
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
+  final _saved = <WordPair>{};
   final _biggerFont = TextStyle(fontSize: 18.0);
 
   @override
   Widget build(BuildContext context) {
     final wordPair = WordPair.random();
-    return _buildSuggestions();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('W to Flutter'),
+        actions: [
+          IconButton(icon: Icon(Icons.list), onPressed: _pushSaved),
+        ],
+      ),
+      body: Center(
+          child: _buildSuggestions()
+      ),
+    );
+  }
+
+  void _pushSaved() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        // NEW lines from here...
+        builder: (BuildContext context) {
+          final tiles = _saved.map(
+                (WordPair pair) {
+              return ListTile(
+                title: Text(
+                  pair.asPascalCase,
+                  style: _biggerFont,
+                ),
+              );
+            },
+          );
+          final divided = ListTile.divideTiles(
+            context: context,
+            tiles: tiles,
+          ).toList();
+
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('Saved Suggestions'),
+            ),
+            body: ListView(children: divided),
+          );
+        }, // ...to here.
+      ),
+    );
   }
 
   Widget _buildSuggestions() {
@@ -54,11 +89,25 @@ class _RandomWordsState extends State<RandomWords> {
   }
 
   Widget _buildRow(WordPair pair) {
+    final alreadySaved = _saved.contains(pair);
     return ListTile(
       title: Text(
         pair.asPascalCase,
         style: _biggerFont,
       ),
+      trailing: Icon(
+        alreadySaved ? Icons.favorite : Icons.favorite_border,
+        color: alreadySaved ? Colors.red : null,
+      ),
+      onTap: () {      // NEW lines from here...
+        setState(() {
+          if (alreadySaved) {
+            _saved.remove(pair);
+          } else {
+            _saved.add(pair);
+          }
+        });
+      },               // ... to here.
     );
   }
 }
